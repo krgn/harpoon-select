@@ -16,7 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install WASI target
+      run: rustup target add wasm32-wasip1
     - name: Build
       run: cargo build --verbose --target wasm32-wasip1
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --verbose --target x86_64-unknown-linux-gnu
