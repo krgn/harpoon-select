@@ -217,7 +217,7 @@ impl ZellijPlugin for State {
                 // Rename the pane after permissions are granted, since
                 // rename_plugin_pane requires ChangeApplicationState permission.
                 let plugin_ids = get_plugin_ids();
-                rename_plugin_pane(plugin_ids.plugin_id, "harpoon");
+                rename_plugin_pane(plugin_ids.plugin_id, "harpoon-select");
             }
             Event::Key(key) => {
                 let has_ctrl = key.key_modifiers.contains(&KeyModifier::Ctrl);

@@ -15,7 +15,7 @@ for nvim), reworked around fuzzy search instead of manual bookmarking. See
 - Start typing to fuzzy search all panes across all tabs
 - `Up`/`Down` or `Ctrl + n`/`Ctrl + p` to cycle through the (filtered) pane list
 - `Enter` to switch to the selected pane
-- `Esc` clears the current search, or closes harpoon if the search is already empty
+- `Esc` clears the current search, or closes harpoon-select if the search is already empty
 - `Ctrl + c` to exit
 
 ## Why?
@@ -34,7 +34,7 @@ Upstream harpoon is a curated bookmark list: you `a`/`A`-add specific panes,
 title) so it survives a session restart. That's the right model if you only
 ever care about a handful of favorite panes.
 
-This fork instead treats harpoon as a pane switcher over *everything*: the
+This fork instead treats harpoon-select as a pane switcher over *everything*: the
 list is always every terminal pane in every tab, and you narrow it by typing
 instead of by curating it up front. That flips a few design decisions:
 
@@ -78,7 +78,7 @@ git clone git@github.com:krgn/harpoon-select.git
 cd harpoon-select
 cargo build --release
 mkdir -p ~/.config/zellij/plugins/
-mv target/wasm32-wasip1/release/harpoon.wasm ~/.config/zellij/plugins/
+mv target/wasm32-wasip1/release/harpoon-select.wasm ~/.config/zellij/plugins/
 ```
 
 ## Keybinding
@@ -89,7 +89,7 @@ somewhere inside the [keybinds](https://zellij.dev/documentation/keybindings.htm
 ```kdl
 shared_except "locked" {
     bind "Ctrl y" {
-        LaunchOrFocusPlugin "file:~/.config/zellij/plugins/harpoon.wasm" {
+        LaunchOrFocusPlugin "file:~/.config/zellij/plugins/harpoon-select.wasm" {
             floating true; move_to_focused_tab true;
         }
     }
