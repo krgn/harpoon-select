@@ -164,14 +164,21 @@ impl State {
 
         self.panes = get_all_panes(&pane_manifest, &tab_info);
 
-        // Track which pane the user was in before harpoon opened
-        let focused_tab = get_focused_tab(&tab_info)?;
-        let focused_pane_info = get_focused_pane(focused_tab.position, &pane_manifest)?;
-        self.focused_pane = Some(Pane {
-            pane_info: focused_pane_info,
-            tab_info: focused_tab,
-        });
+        // Track which pane the user was in before harpoon opened. The lookup
+        // can fail transiently (e.g. TabUpdate and PaneUpdate briefly out of
+        // sync after closing a tab), so keep the previous value in that case.
+        if let Some(focused_tab) = get_focused_tab(&tab_info) {
+            if let Some(focused_pane_info) = get_focused_pane(focused_tab.position, &pane_manifest)
+            {
+                self.focused_pane = Some(Pane {
+                    pane_info: focused_pane_info,
+                    tab_info: focused_tab,
+                });
+            }
+        }
 
+        // Must always run after `self.panes` is replaced: `filtered` holds
+        // indices into `panes`, and stale indices would panic in `render`.
         self.recompute_filtered();
 
         Some(())
@@ -294,7 +301,9 @@ impl ZellijPlugin for State {
         y += 1;
 
         for (display_idx, &pane_idx) in self.filtered.iter().enumerate() {
-            let pane = &self.panes[pane_idx];
+            let Some(pane) = self.panes.get(pane_idx) else {
+                continue;
+            };
             let text = if display_idx == self.selected {
                 Text::new(&pane.to_string()).selected()
             } else {
@@ -370,4 +379,50 @@ fn build_hint_string(
     }
 
     (result, key_ranges)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn terminal(id: u32, title: &str) -> PaneInfo {
+        PaneInfo {
+            id,
+            title: title.to_string(),
+            ..Default::default()
+        }
+    }
+
+    fn tab(position: usize, active: bool) -> TabInfo {
+        TabInfo {
+            position,
+            name: format!("tab{position}"),
+            active,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn filtered_stays_in_bounds_when_focused_tab_is_missing() {
+        let mut state = State::default();
+        state.tab_info = Some(vec![tab(0, true)]);
+        state.pane_manifest = Some(PaneManifest {
+            panes: HashMap::from([(0, vec![terminal(1, "a"), terminal(2, "b"), terminal(3, "c")])]),
+        });
+        state.update_panes();
+        assert_eq!(state.filtered, vec![0, 1, 2]);
+
+        // Pane closed while the tab update hasn't marked any tab active yet:
+        // the focused-pane lookup fails, but `filtered` must still be rebuilt.
+        state.tab_info = Some(vec![tab(0, false)]);
+        state.pane_manifest = Some(PaneManifest {
+            panes: HashMap::from([(0, vec![terminal(1, "a")])]),
+        });
+        state.update_panes();
+
+        assert_eq!(state.panes.len(), 1);
+        assert!(state.filtered.iter().all(|&i| i < state.panes.len()));
+        assert!(state.selected_pane().is_some());
+    }
 }
