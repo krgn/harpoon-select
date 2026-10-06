@@ -8,8 +8,6 @@ This is a fork of [Nacho114/harpoon](https://github.com/Nacho114/harpoon)
 for nvim), reworked around fuzzy search instead of manual bookmarking. See
 [Fork rationale](#fork-rationale-vs-upstream) below for what changed and why.
 
-![usage](https://github.com/Nacho114/harpoon/raw/main/img/usage.gif)
-
 ## Usage
 
 - Start typing to fuzzy search all panes across all tabs
